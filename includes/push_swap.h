@@ -5,12 +5,9 @@
 
 typedef struct s_stack
 {
-	int				n;
+	int				value;
 	int				index;
-	int				pos;
-	int				fit;
-	int				move_a;
-	int				move_b;
+	struct s_stack	*prev;
 	struct s_stack	*next;
 }	t_stack;
 
