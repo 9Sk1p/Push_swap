@@ -6,7 +6,7 @@
 /*   By: yhubaren <yhubaren@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/15 18:03:19 by yhubaren          #+#    #+#             */
-/*   Updated: 2026/10/16 15:22:03 by yhubaren         ###   ########.fr       */
+/*   Updated: 2026/10/16 15:24:23 by yhubaren         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@ int	ft_is_valid_number(char *str)
 	int	i;
 
 	i = 0;
-
 	if (str[i] == '-' || str[i] == '+')
 		i++;
 	if (str[i] == '\0')
@@ -29,8 +28,9 @@ int	ft_is_valid_number(char *str)
 		else
 			return (0);
 	}
-	return(1);
+	return (1);
 }
+
 long	ft_atol(const char *str)
 {
 	long	sign;
@@ -56,6 +56,7 @@ long	ft_atol(const char *str)
 	}
 	return (number * sign);
 }
+
 int	ft_check_duplicate(t_stack *a, long num)
 {
 	if (!a)
