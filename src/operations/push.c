@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   push.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mvdovenk <mvdovenk@student.42.fr>          +#+  +:+       +#+        */
+/*   By: yhubaren <yhubaren@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/17 12:56:02 by mvdovenk          #+#    #+#             */
-/*   Updated: 2026/10/17 12:56:03 by mvdovenk         ###   ########.fr       */
+/*   Updated: 2026/10/17 13:27:26 by yhubaren         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ void	op_push(t_stack *dst, t_stack *src)
 
 	if (!src || src->size == 0)
 		return ;
-
 	node = src->top;
 	src->top = node->next;
 	if (src->top)
@@ -26,7 +25,6 @@ void	op_push(t_stack *dst, t_stack *src)
 	else
 		src->bottom = NULL;
 	src->size--;
-
 	node->prev = NULL;
 	node->next = dst->top;
 	if (dst->top)

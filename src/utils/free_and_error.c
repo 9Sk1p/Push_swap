@@ -6,15 +6,15 @@
 /*   By: yhubaren <yhubaren@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/16 14:07:30 by yhubaren          #+#    #+#             */
-/*   Updated: 2026/10/16 16:49:09 by yhubaren         ###   ########.fr       */
+/*   Updated: 2026/10/17 12:23:47 by yhubaren         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "push_swap.h"
 
-void	ft_free_stack(t_stack **a)
+void	ft_free_stack(t_node **a)
 {
-	t_stack	*tmp;
+	t_node	*tmp;
 
 	if (!a)
 		return ;
@@ -41,7 +41,7 @@ void	ft_free_split(char **arr)
 	free(arr);
 }
 
-void	ft_error(t_stack **a, char **split_arr)
+void	ft_error(t_node **a, char **split_arr)
 {
 	if (a)
 		ft_free_stack(a);

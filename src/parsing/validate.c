@@ -6,7 +6,7 @@
 /*   By: yhubaren <yhubaren@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/15 18:03:19 by yhubaren          #+#    #+#             */
-/*   Updated: 2026/10/16 15:24:23 by yhubaren         ###   ########.fr       */
+/*   Updated: 2026/10/17 12:23:55 by yhubaren         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ long	ft_atol(const char *str)
 	return (number * sign);
 }
 
-int	ft_check_duplicate(t_stack *a, long num)
+int	ft_check_duplicate(t_node *a, long num)
 {
 	if (!a)
 		return (0);
