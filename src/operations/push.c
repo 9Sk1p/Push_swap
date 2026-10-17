@@ -1,3 +1,5 @@
+#include "push_swap.h"
+
 void    op_push(t_stack *dst, t_stack *src)
 {
     t_node  *node;
