@@ -12,11 +12,6 @@
 
 #include "push_swap.h"
 
-void		op_swap(t_stack *s);
-void		op_push(t_stack *dst, t_stack *src);
-void		op_rotate(t_stack *s);
-void		op_rev_rotate(t_stack *s);
-
 static int	exec_rotate(char *cmd, t_stack *a, t_stack *b)
 {
 	if (!ft_strncmp(cmd, "ra", 3))
@@ -42,6 +37,33 @@ static int	exec_rotate(char *cmd, t_stack *a, t_stack *b)
 	return (1);
 }
 
+static t_bench	*get_bench(t_stack *a, t_stack *b)
+{
+	if (a)
+		return (a->bench);
+	if (b)
+		return (b->bench);
+	return (NULL);
+}
+
+static void	count_operation(t_bench *bench, char *cmd)
+{
+	static char	*names[11] = {"sa", "sb", "ss", "pa", "pb", "ra",
+		"rb", "rr", "rra", "rrb", "rrr"};
+	int			i;
+
+	if (!bench)
+		return ;
+	bench->total++;
+	i = 0;
+	while (i < 11)
+	{
+		if (!ft_strncmp(cmd, names[i], ft_strlen(names[i]) + 1))
+			bench->counts[i]++;
+		i++;
+	}
+}
+
 void	exec_op(char *cmd, t_stack *a, t_stack *b)
 {
 	if (!ft_strncmp(cmd, "sa", 3))
@@ -59,5 +81,6 @@ void	exec_op(char *cmd, t_stack *a, t_stack *b)
 		op_push(b, a);
 	else if (!exec_rotate(cmd, a, b))
 		return ;
+	count_operation(get_bench(a, b), cmd);
 	ft_putendl_fd(cmd, 1);
 }

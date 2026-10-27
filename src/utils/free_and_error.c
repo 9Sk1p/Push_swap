@@ -12,18 +12,20 @@
 
 #include "push_swap.h"
 
-void	ft_free_stack(t_node **a)
+void	ft_free_stack(t_stack *stack)
 {
 	t_node	*tmp;
 
-	if (!a)
+	if (!stack)
 		return ;
-	while (*a != NULL)
+	while (stack->top != NULL)
 	{
-		tmp = (*a)->next;
-		free(*a);
-		*a = tmp;
+		tmp = stack->top->next;
+		free(stack->top);
+		stack->top = tmp;
 	}
+	stack->bottom = NULL;
+	stack->size = 0;
 }
 
 void	ft_free_split(char **arr)
@@ -41,10 +43,10 @@ void	ft_free_split(char **arr)
 	free(arr);
 }
 
-void	ft_error(t_node **a, char **split_arr)
+void	ft_error(t_stack *stack, char **split_arr)
 {
-	if (a)
-		ft_free_stack(a);
+	if (stack)
+		ft_free_stack(stack);
 	if (split_arr)
 		ft_free_split(split_arr);
 	write (2, "Error\n", 6);

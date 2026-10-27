@@ -12,7 +12,7 @@
 
 #include "push_swap.h"
 
-int	ft_is_valid_number(char *str)
+int	is_valid_number(char *str)
 {
 	int	i;
 
@@ -31,14 +31,32 @@ int	ft_is_valid_number(char *str)
 	return (1);
 }
 
+static long	parse_digits(const char *str, long sign, long i)
+{
+	long	number;
+	long	digit;
+
+	number = 0;
+	while (str[i] >= '0' && str[i] <= '9')
+	{
+		digit = str[i++] - '0';
+		if (number > (LONG_MAX - digit) / 10)
+		{
+			if (sign == 1)
+				return (LONG_MAX);
+			return (LONG_MIN);
+		}
+		number = number * 10 + digit;
+	}
+	return (number * sign);
+}
+
 long	ft_atol(const char *str)
 {
 	long	sign;
-	long	number;
 	long	i;
 
 	i = 0;
-	number = 0;
 	sign = 1;
 	while ((str[i] >= 9 && str[i] <= 13) || (str[i] == 32))
 		i++;
@@ -48,16 +66,10 @@ long	ft_atol(const char *str)
 			sign = -1;
 		i++;
 	}
-	while (str[i] >= '0' && str[i] <= '9')
-	{
-		number *= 10;
-		number += str[i] - '0';
-		i++;
-	}
-	return (number * sign);
+	return (parse_digits(str, sign, i));
 }
 
-int	ft_check_duplicate(t_node *a, long num)
+int	check_duplicate(t_node *a, long num)
 {
 	if (!a)
 		return (0);
@@ -65,7 +77,7 @@ int	ft_check_duplicate(t_node *a, long num)
 	{
 		if (a->value == num)
 			return (1);
-		a->next;
+		a = a->next;
 	}
 	return (0);
 }

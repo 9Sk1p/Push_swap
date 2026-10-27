@@ -1,162 +1,526 @@
-*This project has been created as part of the 42 curriculum by <login1>.*
-
 # push_swap
 
-## Description
+`push_swap` is a 42 algorithm project. It receives a collection of unique
+integers, represents them in stack `A`, and prints a sequence of allowed
+operations that leaves `A` sorted in ascending order and stack `B` empty.
 
-**push_swap** is an algorithmic project from the 42 curriculum focused on data structures, algorithmic complexity, and sorting optimization.
+The program writes sorting operations to `stdout`. Errors and optional
+benchmark information are written to `stderr`.
 
-The primary goal of the project is to sort a given stack of unique integers in ascending order using only two stacks (**Stack A** and **Stack B**) and a strictly limited set of 11 stack operations. The program must output the shortest possible sequence of instructions to `stdout` that results in a fully sorted **Stack A** and an empty **Stack B**.
+## Contents
 
-Key features of this implementation include:
-* **Coordinate Compression (Indexing):** Normalizing arbitrary signed integers into sequential ranks from `0` to `n - 1`.
-* **Disorder Metric Calculation:** Measuring the initial inversion ratio of the input stack prior to sorting.
-* **Four Sorting Strategies:** Supporting Simple $O(n^2)$, Medium $O(n\sqrt{n})$, Complex $O(n \log n)$, and an **Adaptive** mode that automatically selects the optimal algorithm based on the measured disorder.
-* **Benchmarking Mode (`--bench`):** Tracking total operations and per-instruction counts, outputting a formatted statistical report to `stderr`.
+- [Requirements](#requirements)
+- [Build](#build)
+- [Usage](#usage)
+- [Options](#options)
+- [Allowed operations](#allowed-operations)
+- [Input validation](#input-validation)
+- [How the implementation works](#how-the-implementation-works)
+- [Sorting strategies](#sorting-strategies)
+- [Benchmark mode](#benchmark-mode)
+- [Verification and testing](#verification-and-testing)
+- [Project structure](#project-structure)
+- [Complexity](#complexity)
+- [Cleanup](#cleanup)
+- [Scope](#scope)
 
----
+## Requirements
 
-## Allowed Operations
+The project uses:
 
-| Operation | Description |
-| :--- | :--- |
-| `sa` | **Swap A:** Swap the first 2 elements at the top of stack `a`. |
-| `sb` | **Swap B:** Swap the first 2 elements at the top of stack `b`. |
-| `ss` | **Swap Both:** Execute `sa` and `sb` simultaneously. |
-| `pa` | **Push A:** Take the top element from `b` and put it at the top of `a`. |
-| `pb` | **Push B:** Take the top element from `a` and put it at the top of `b`. |
-| `ra` | **Rotate A:** Shift up all elements of stack `a` by 1 (the first element becomes the last). |
-| `rb` | **Rotate B:** Shift up all elements of stack `b` by 1 (the first element becomes the last). |
-| `rr` | **Rotate Both:** Execute `ra` and `rb` simultaneously. |
-| `rra` | **Reverse Rotate A:** Shift down all elements of stack `a` by 1 (the last element becomes the first). |
-| `rrb` | **Reverse Rotate B:** Shift down all elements of stack `b` by 1 (the last element becomes the first). |
-| `rrr` | **Reverse Rotate Both:** Execute `rra` and `rrb` simultaneously. |
+- `cc`;
+- `make`;
+- the C standard library functions allowed by the 42 subject;
+- the local `libft` stored in [`libft/`](./libft).
 
----
+The top-level Makefile compiles with:
 
-## Instructions
+```text
+-Wall -Wextra -Werror
+```
 
-### 1. Compilation & Installation
+No external runtime dependency is required.
 
-Clone the repository and compile the project using the provided `Makefile`. The code is compiled with `-Wall -Wextra -Werror` flags and strictly adheres to the 42 **Norminette** standard.
+## Build
 
-    # Compile the push_swap executable
-    make
+From the repository root:
 
-    # Remove object files (.o)
-    make clean
+```bash
+make
+```
 
-    # Remove object files and the binary executable
-    make fclean
+This builds `libft/libft.a`, compiles the project object files, and creates:
 
-    # Recompile the entire project from scratch
-    make re
+```text
+./push_swap
+```
 
-### 2. Execution & Usage Examples
+Useful targets:
 
-Run the program by passing a sequence of unique integers either as separate command-line arguments or as a single space-separated string:
+```bash
+make          # Build the executable
+make clean    # Remove project and libft object files
+make fclean   # Remove object files, libft.a, and push_swap
+make re       # Run fclean and build again
+```
 
-    # Standard execution (runs --adaptive mode by default)
-    ./push_swap 42 -5 19 0 8
+The Makefile builds `libft` through `make -C libft` and links the resulting
+static library into `push_swap`.
 
-    # Passing arguments as a single quoted string
-    ./push_swap "42 -5 19 0 8"
+## Usage
 
-#### Strategy Selection Flags:
+The simplest invocation is:
 
-    # Force Simple O(n^2) selection sort strategy
-    ./push_swap --simple 5 2 9 1 3
+```bash
+./push_swap 42 -5 19 0 8
+```
 
-    # Force Medium O(n * sqrt(n)) chunk-based strategy
-    ./push_swap --medium 5 2 9 1 3
+Arguments can be separate shell arguments or one quoted, space-separated
+argument:
 
-    # Force Complex O(n log n) bitwise Radix sort strategy
-    ./push_swap --complex 5 2 9 1 3
+```bash
+./push_swap 42 -5 19 0 8
+./push_swap "42 -5 19 0 8"
+```
 
-    # Explicitly run Adaptive strategy (default)
-    ./push_swap --adaptive 5 2 9 1 3
+For an already sorted input, the program prints nothing and exits successfully:
 
-#### Benchmarking Mode:
+```bash
+./push_swap 1 2 3 4
+```
 
-Add the `--bench` flag to output detailed complexity and operation statistics to `stderr` while keeping `stdout` clean for piping into `checker`:
+For an unsorted input, every output line is one operation:
 
-    ./push_swap --bench 4 3 2 1
+```bash
+./push_swap 2 1
+# sa
+```
 
-Example output on `stderr`:
+The output can be redirected or piped:
 
-    [bench] disorder:   100.00%
-    [bench] strategy:   Adaptive / O(n log n)
-    [bench] total_ops:  14
-    [bench] sa:   1  sb:   0  ss:   0  pa:   4  pb:   4
-    [bench] ra:   3  rb:   0  rr:   0  rra:  2  rrb:  0  rrr:   0
+```bash
+./push_swap 4 3 2 1 > operations.txt
+```
 
-#### Verification and Move Counting:
+## Options
 
-    # Validate output using the official 42 checker
-    ARG="4 67 3 87 23"; ./push_swap $ARG \vert{} ./checker_linux$ARG
+### Strategy selectors
 
-    # Count the number of operations for 100 random integers
-    ARG=$(shuf -i 0-9999 -n 100); ./push_swap$ARG | wc -l
+Exactly zero or one strategy selector may be used:
 
-    # Count the number of operations for 500 random integers
-    ARG=$(shuf -i 0-9999 -n 500); ./push_swap$ARG | wc -l
+```bash
+./push_swap --simple 5 2 9 1 3
+./push_swap --medium 5 2 9 1 3
+./push_swap --complex 5 2 9 1 3
+./push_swap --adaptive 5 2 9 1 3
+```
 
----
+If no selector is supplied, `--adaptive` is used.
 
-## Detailed Explanation and Justification of Algorithms
+The selector may appear before or after `--bench`:
 
-### 1. Data Structure Choice: Doubly Linked List
-Instead of static arrays (which require $O(n)$ memory shifts whenever an element is pushed or rotated), this project uses a **doubly linked list** (`t_node`) managed by a stack header structure (`t_stack`):
-* **`t_node`** stores `value` (original integer), `index` (normalized rank in `[0, n - 1]`), and pointers `next` and `prev`.
-* **`t_stack`** stores pointers to both the `top` and `bottom` nodes along with the current `size`.
-* **Justification:** Maintaining direct pointers to both ends of the list allows all 11 stack operations (`swap`, `push`, `rotate`, and `rev_rotate`) to execute in strict **$O(1)$ constant time** via pointer rewiring without traversing the list.
+```bash
+./push_swap --bench --complex 5 2 9 1 3
+./push_swap --medium --bench 5 2 9 1 3
+```
 
-### 2. Pre-processing: Coordinate Compression (Indexing)
-Before sorting begins, `index_stack` assigns each node an `index` from `0` to `n - 1` equal to the number of elements in the stack that are strictly smaller than its value.
-* **Justification:** Indexing transforms arbitrary signed integers (including negative numbers and `INT_MIN` / `INT_MAX` extremes) into a contiguous range `[0, n - 1]`. This simplifies range comparisons in Chunk Sort and enables direct binary bit inspection in Radix Sort.
+The following are errors:
 
-### 3. Base Cases (`size <= 3`)
-* **2 Elements:** Executes a single `sa` if the top element is greater than the bottom element.
-* **3 Elements (`sort_three`):** Guarantees sorting in **at most 2 operations**. In step 1, the maximum value among the three nodes is rotated to `bottom` (`ra` if the maximum is at `top`, or `rra` if it is in the middle). In step 2, if the top two elements remain out of order, a single `sa` swaps them into place.
+```bash
+./push_swap --simple --medium 5 2 9 1 3
+./push_swap --adaptive --simple 5 2 9 1 3
+./push_swap --unknown 5 2 9 1 3
+./push_swap --simple
+```
 
-### 4. Simple Strategy — $O(n^2)$: Minimum Extraction (Selection Sort)
-* **Mechanism:** The algorithm repeatedly searches **Stack A** for the node with the smallest remaining `index` (`target = 0, 1, 2...`), calculates its current position to determine the shortest rotation direction (`ra` if located in the upper half `pos <= size / 2`, or `rra` if located in the lower half), brings it to the top, and pushes it to **Stack B** (`pb`). Once only 3 elements remain in **Stack A**, `sort_three` orders them, and all elements in **Stack B** are pushed back to **Stack A** (`pa`).
-* **Justification:** Scanning the stack takes $O(n)$ and rotating takes at most $n / 2$ operations per element, yielding $O(n^2)$ overall complexity. For small inputs or nearly sorted stacks (`disorder < 0.20`), it avoids bucket partitioning overhead and achieves very low operation counts.
+Each error prints `Error` followed by a newline to `stderr` and exits with a
+non-zero status.
 
-### 5. Medium Strategy — $O(n\sqrt{n})$: Chunk-Based Sort (K-Sort)
-* **Mechanism:**
-  1. **Phase 1 (Distribution from A to B):** A sliding window of width `chunk_size` $\approx \sqrt{n}$ (`15` for $n \le 100$, `30` for $n = 500$) and a counter `i` are maintained. If `a->top->index <= i`, the element is pushed to **Stack B** (`pb`) and rotated to the bottom (`rb`), incrementing `i`. Else if `a->top->index <= i + chunk_size`, the element is pushed to the top of **Stack B** (`pb`), incrementing `i`. Otherwise, **Stack A** is rotated (`ra`). This arranges **Stack B** into a K-shaped distribution where smaller indices cluster near the middle and larger indices sit near the top and bottom edges.
-  2. **Phase 2 (Reconstruction from B to A):** The algorithm repeatedly locates the maximum remaining index (`b->size - 1`) in **Stack B**, rotates it to the top via the shortest path (`rb` or `rrb`), and pushes it back to **Stack A** (`pa`).
-* **Justification:** Partitioning into $\approx \sqrt{n}$ chunks keeps candidate elements close to the top or bottom of **Stack B**, reducing the average rotation cost during reconstruction to $O(\sqrt{n})$ per element and $O(n\sqrt{n})$ in total. Empirically, this strategy averages **~600 moves for 100 numbers** and **~5000 moves for 500 numbers**, outperforming pure Radix Sort on standard evaluation sizes.
+### `--bench`
 
-### 6. Complex Strategy — $O(n \log n)$: LSD Bitwise Radix Sort
-* **Mechanism:** Operates on the binary representation of each node's `index` from the Least Significant Bit (bit `0`) to the Most Significant Bit (`max_bits`). For each bit position `i`, all $n$ elements currently in **Stack A** are inspected:
-  * If the $i$-th bit of `a->top->index` is `0`, the node is pushed to **Stack B** (`pb`).
-  * If the $i$-th bit is `1`, the node is rotated in **Stack A** (`ra`).
-  * After all $n$ elements have been processed for bit `i`, all nodes in **Stack B** are returned to **Stack A** (`pa`), preserving their relative order for the next bit pass.
-* **Justification:** For $n$ elements, the maximum index is $n - 1$, requiring $\lceil \log_2(n) \rceil$ bit passes (7 passes for $n = 100$, 9 passes for $n = 500$). Because each pass executes at most $2n$ operations, the total complexity is strictly bounded by $O(n \log n)$ regardless of initial disorder.
+`--bench` enables benchmark output without changing the operation stream:
 
-### 7. Adaptive Strategy & Disorder Metric
-Before executing any stack operations, the program computes the **disorder metric** as the ratio of inverted pairs to the total number of element pairs:
-$$\text{disorder} = \frac{\text{mistakes}}{\frac{n(n - 1)}{2}}$$
-where a mistake is any pair of positions $(i, j)$ with $i < j$ such that $a[i] > a[j]$.
-* **`disorder < 0.20`:** Selects the **Simple $O(n^2)$** strategy to efficiently resolve low-entropy stacks.
-* **`0.20 <= disorder < 0.50`:** Selects the **Medium $O(n\sqrt{n})$** chunk strategy for balanced partitioning and extraction.
-* **`disorder >= 0.50`:** Selects the **Complex $O(n \log n)$** strategy to guarantee logarithmic scaling on highly disordered inputs.
+```bash
+./push_swap --bench 4 3 2 1 >operations.txt 2>benchmark.txt
+```
 
----
+The contents of `operations.txt` are suitable for a checker. The contents of
+`benchmark.txt` contain disorder, the selected strategy, the total number of
+operations, and a count for each operation.
 
-## Resources
+`--bench` may be specified once and combined with one strategy selector:
 
-### Classic References & Documentation
-* **Donald E. Knuth** — *The Art of Computer Programming, Volume 3: Sorting and Searching* (inversion theory, Selection Sort, and Radix Sort fundamentals).
-* **Thomas H. Cormen et al.** — *Introduction to Algorithms (CLRS)* (asymptotic analysis, doubly linked lists, and comparison vs. non-comparison sorting).
-* **Push_Swap Visualizer:** [o-reo/push_swap_visualizer](https://github.com/o-reo/push_swap_visualizer) (used for visual debugging of stack operations and K-Sort distributions).
-* **GeeksforGeeks:** Articles on [Radix Sort](https://www.geeksforgeeks.org/radix-sort/) and [Counting Inversions in an Array](https://www.geeksforgeeks.org/inversion-count-in-array-using-merge-sort/).
+```bash
+./push_swap --bench --simple 5 2 9 1 3
+./push_swap --complex --bench 5 2 9 1 3
+```
 
-### AI Usage Disclosure
-In compliance with the 42 curriculum guidelines, Artificial Intelligence (Google Gemini) was used as a study partner and assistant for the following tasks:
-* **Data Structure Architecture:** Understanding pointer manipulation (`next` and `prev` links) in doubly linked lists compared to arrays.
-* **Norminette Compliance:** Refactoring the command dispatcher (`exec_op` and `exec_rotate`) and sorting helper functions to satisfy the 25-line-per-function and single-statement-per-line rules.
-* **Algorithm Verification:** Reviewing the mathematical logic for coordinate compression (`index_stack`), K-Sort chunk window sizing ($O(n\sqrt{n})$), and bitwise LSD Radix Sort ($O(n \log n)$).
-* **Documentation:** Structuring and formatting this `README.md` file according to the project specification.
+## Allowed operations
+
+The algorithms use only these 11 operations:
+
+| Operation | Effect |
+| --- | --- |
+| `sa` | Swap the top two elements of `A`. |
+| `sb` | Swap the top two elements of `B`. |
+| `ss` | Apply `sa` and `sb`. |
+| `pa` | Push the top of `B` onto `A`. |
+| `pb` | Push the top of `A` onto `B`. |
+| `ra` | Move the top of `A` to its bottom. |
+| `rb` | Move the top of `B` to its bottom. |
+| `rr` | Apply `ra` and `rb`. |
+| `rra` | Move the bottom of `A` to its top. |
+| `rrb` | Move the bottom of `B` to its top. |
+| `rrr` | Apply `rra` and `rrb`. |
+
+Operations on a stack with fewer than two elements do nothing. Push operations
+on an empty source stack also do nothing internally, although the sorting
+algorithms avoid emitting unnecessary pushes.
+
+## Input validation
+
+The parser accepts:
+
+- positive and negative decimal integers;
+- an optional leading `+` or `-`;
+- `INT_MIN` (`-2147483648`);
+- `INT_MAX` (`2147483647`);
+- multiple arguments;
+- one or more space-separated arguments in a quoted shell argument;
+- mixed forms, for example `./push_swap "3 -1" 8`.
+
+The parser rejects:
+
+- duplicate values;
+- values outside the signed 32-bit integer range;
+- non-decimal tokens;
+- a sign without digits;
+- empty or whitespace-only numeric arguments;
+- unknown options;
+- repeated `--bench`;
+- more than one strategy selector;
+- a selector without any numbers.
+
+Examples:
+
+```bash
+./push_swap 2147483647 -2147483648 0
+./push_swap "3 -1 2" 8
+
+./push_swap 1 2 1              # Error
+./push_swap 2147483648         # Error
+./push_swap -2147483649        # Error
+./push_swap "+"                # Error
+./push_swap ""                 # Error
+./push_swap --unknown 1 2      # Error
+```
+
+With no arguments at all, `./push_swap` exits successfully without output.
+
+## How the implementation works
+
+### Stack representation
+
+The project uses a doubly linked list:
+
+```c
+typedef struct s_node
+{
+    int             value;
+    int             index;
+    struct s_node   *next;
+    struct s_node   *prev;
+}   t_node;
+```
+
+Each stack stores its top, bottom, and current size:
+
+```c
+typedef struct s_stack
+{
+    t_node  *top;
+    t_node  *bottom;
+    int     size;
+}   t_stack;
+```
+
+Keeping both end pointers makes swap, push, rotate, and reverse rotate pointer
+operations constant time.
+
+### Parsing
+
+`parse_options` scans command-line options and returns the selected strategy
+and benchmark state. `parse_args` splits numeric arguments, validates each
+token, checks the integer range, detects duplicates, allocates a node, and
+appends it to `A`.
+
+### Coordinate compression
+
+`index_stack` assigns each value a rank:
+
+- the smallest value gets index `0`;
+- the next value gets index `1`;
+- the largest value gets index `n - 1`.
+
+The original values remain in each node. Algorithms compare indexes because
+they provide a compact range suitable for chunk boundaries and bit tests.
+
+### Disorder
+
+`calculate_disorder` counts inverted pairs:
+
+```text
+inversion = (i, j) where i < j and A[i] > A[j]
+```
+
+It returns:
+
+```text
+inversions / (n * (n - 1) / 2)
+```
+
+The result is `0.0` for an already sorted input and approaches `1.0` for a
+reverse-sorted input.
+
+### Operation execution
+
+`exec_op` dispatches an operation to the low-level stack functions and prints
+the command to `stdout`. When benchmark mode is enabled, it also increments
+the operation counters. Benchmark data is never mixed into the operation
+stream.
+
+## Sorting strategies
+
+### Simple
+
+`sort_simple` repeatedly finds the next smallest index in `A`, rotates it to
+the top using the shorter direction, and pushes it to `B`. It sorts the
+remaining small stack and pushes the extracted elements back to `A`.
+
+This is a straightforward selection-style algorithm. It is useful for small
+inputs and low disorder.
+
+### Medium
+
+`sort_medium` uses a square-root-sized chunk window:
+
+1. distribute indexed nodes from `A` to `B`;
+2. rotate `B` while distributing low indexes;
+3. locate the greatest remaining index in `B`;
+4. rotate that node to the top using `rb` or `rrb`;
+5. push it back to `A`.
+
+The implementation uses a chunk size derived from `sqrt(n)`. It targets
+`O(n sqrt(n))` behavior in the push_swap operation model.
+
+### Complex
+
+`sort_complex` is an LSD binary radix sort over the compressed indexes. For
+each bit position:
+
+1. push zero-bit elements from `A` to `B`;
+2. rotate one-bit elements in `A`;
+3. push all elements from `B` back to `A`;
+4. continue with the next bit.
+
+The number of passes is the number of bits needed to represent `n - 1`.
+Its target complexity is `O(n log n)` in generated push_swap operations.
+
+### Adaptive
+
+`sort_adaptive` selects a strategy from the measured disorder:
+
+| Disorder | Strategy |
+| --- | --- |
+| `< 0.20` | Simple |
+| `0.20` to `< 0.50` | Medium |
+| `>= 0.50` | Complex |
+
+The thresholds are documented and deterministic. They are a strategy policy,
+not a claim that the resulting sequence is mathematically minimal.
+
+## Benchmark mode
+
+Example:
+
+```bash
+./push_swap --bench --adaptive 4 3 2 1
+```
+
+Example `stderr` output:
+
+```text
+[bench] disorder: 100.00%
+[bench] strategy: Adaptive
+[bench] total_ops: <number of emitted operations>
+[bench] sa: <count> sb: <count> ss: <count> pa: <count> pb: <count>
+[bench] ra: <count> rb: <count> rr: <count> rra: <count> rrb: <count> rrr: <count>
+```
+
+The exact counts depend on the input and selected strategy. `total_ops` is the
+sum of emitted operations. To keep the streams separate:
+
+```bash
+./push_swap --bench --complex 4 3 2 1 \
+    >operations.txt \
+    2>benchmark.txt
+```
+
+## Verification and testing
+
+### Build check
+
+```bash
+make re
+```
+
+### Check an operation stream
+
+If a checker binary is available locally:
+
+```bash
+ARG="4 67 3 87 23"
+./push_swap $ARG | ./checker_linux $ARG
+```
+
+Expected result is `OK`. The repository does not include the bonus checker.
+
+### Count operations
+
+```bash
+ARG="$(shuf -i 0-9999 -n 100)"
+./push_swap $ARG | wc -l
+
+ARG="$(shuf -i 0-9999 -n 500)"
+./push_swap $ARG | wc -l
+```
+
+### Verify benchmark accounting
+
+```bash
+./push_swap --bench --complex 5 2 9 1 3 \
+    >/tmp/push_swap.operations \
+    2>/tmp/push_swap.benchmark
+
+cat /tmp/push_swap.operations
+cat /tmp/push_swap.benchmark
+```
+
+The number after `total_ops` must equal the number of operation lines:
+
+```bash
+wc -l </tmp/push_swap.operations
+grep 'total_ops' /tmp/push_swap.benchmark
+```
+
+### Edge-case checklist
+
+Run these cases when changing parsing or algorithms:
+
+```bash
+./push_swap
+./push_swap 1
+./push_swap 1 2
+./push_swap 2 1
+./push_swap 3 1 2
+./push_swap 1 2 3
+./push_swap "5 4 3 2 1"
+./push_swap -2147483648 0 2147483647
+./push_swap 1 2 1
+./push_swap 2147483648
+./push_swap -2147483649
+./push_swap ""
+./push_swap --bench --simple 3 2 1
+./push_swap --simple --medium 3 2 1
+```
+
+The valid cases should sort successfully. Invalid cases should print `Error`
+to `stderr` and return a non-zero status.
+
+## Project structure
+
+```text
+.
+├── Makefile
+├── README.md
+├── includes/
+│   └── push_swap.h
+├── libft/
+└── src/
+    ├── main.c
+    ├── algorithms/
+    │   ├── simple.c
+    │   ├── medium.c
+    │   ├── complex.c
+    │   └── sort_3.c
+    ├── operations/
+    │   ├── execute.c
+    │   ├── index.c
+    │   ├── push.c
+    │   ├── rotate.c
+    │   └── swap.c
+    ├── parsing/
+    │   ├── parse_args.c
+    │   ├── validate.c
+    │   └── disorder.c
+    └── utils/
+        ├── bench.c
+        └── free_and_error.c
+```
+
+Important responsibilities:
+
+| File | Responsibility |
+| --- | --- |
+| `main.c` | Initialize stacks, parse options, run the selected strategy, clean up. |
+| `parse_args.c` | Split arguments and build stack `A`. |
+| `validate.c` | Validate decimal tokens, ranges, and duplicates. |
+| `disorder.c` | Parse options, test sortedness, calculate disorder. |
+| `execute.c` | Dispatch operations, print them, and count them. |
+| `index.c` | Assign compressed indexes. |
+| `swap.c` | Implement `sa`/`sb` primitives. |
+| `push.c` | Implement `pa`/`pb` primitives. |
+| `rotate.c` | Implement rotate and reverse-rotate primitives. |
+| `simple.c` | Selection-style strategy. |
+| `medium.c` | Chunk strategy and adaptive selection. |
+| `complex.c` | Binary radix strategy. |
+| `sort_3.c` | Small-stack sorting. |
+| `bench.c` | Format benchmark output to `stderr`. |
+| `free_and_error.c` | Free allocated memory and report `Error`. |
+
+## Complexity
+
+The expected strategy targets are:
+
+| Component | Target |
+| --- | --- |
+| Stack operations | `O(1)` pointer updates |
+| Indexing | `O(n^2)` time, `O(n)` node storage |
+| Disorder calculation | `O(n^2)` time |
+| Simple strategy | `O(n^2)` generated-operation target |
+| Medium strategy | `O(n sqrt(n))` generated-operation target |
+| Complex strategy | `O(n log n)` generated-operation target |
+
+Operation count is the relevant cost model for this project. The strategies
+are deterministic, but they do not promise a globally shortest sequence for
+every input.
+
+## Cleanup
+
+Remove all generated build files before submitting or switching branches:
+
+```bash
+make fclean
+```
+
+This removes project object files, libft object files, `libft.a`, and the
+`push_swap` executable.
+
+## Scope
+
+The mandatory `push_swap` executable, four strategies, adaptive selection,
+input validation, benchmark mode, and build system are included.
+
+The bonus `checker` program is intentionally not included. A local
+`checker_linux` or equivalent checker can still be used for external
+verification as shown above.

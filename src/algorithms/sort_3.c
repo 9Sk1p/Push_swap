@@ -12,7 +12,7 @@
 
 #include "push_swap.h"
 
-void	sort_3(t_stack *a, t_stack *b)
+void	sort_three(t_stack *a, t_stack *b)
 {
 	int	top;
 	int	mid;
