@@ -72,7 +72,7 @@ void		op_rotate(t_stack *stack);
 void		op_rev_rotate(t_stack *stack);
 void		exec_op(char *cmd, t_stack *a, t_stack *b);
 void		print_benchmark(t_bench *bench, double disorder,
-				t_strategy strategy);
+				t_strategy strategy, int size);
 
 void		sort_three(t_stack *a, t_stack *b);
 void		sort_simple(t_stack *a, t_stack *b);

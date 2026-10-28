@@ -25,15 +25,19 @@ static void	print_percent(double disorder)
 	ft_putstr_fd("%", 2);
 }
 
-static char	*strategy_name(t_strategy strategy)
+static char	*strategy_name(t_strategy strategy, double disorder, int size)
 {
 	if (strategy == STRATEGY_SIMPLE)
-		return ("Simple / O(n2)");
+		return ("Simple");
 	if (strategy == STRATEGY_MEDIUM)
-		return ("Medium / O(n sqrt(n))");
+		return ("Medium");
 	if (strategy == STRATEGY_COMPLEX)
-		return ("Complex / O(n log n)");
-	return ("Adaptive");
+		return ("Complex");
+	if (size <= 5 || disorder < 0.20)
+		return ("Simple");
+	if (disorder < 0.50)
+		return ("Medium");
+	return ("Complex");
 }
 
 static void	print_swap_counts(t_bench *bench)
@@ -68,14 +72,15 @@ static void	print_rotate_counts(t_bench *bench)
 	ft_putchar_fd('\n', 2);
 }
 
-void	print_benchmark(t_bench *bench, double disorder, t_strategy strategy)
+void	print_benchmark(t_bench *bench, double disorder, t_strategy strategy,
+		int size)
 {
 	if (!bench)
 		return ;
 	ft_putstr_fd("[bench] disorder: ", 2);
 	print_percent(disorder);
 	ft_putstr_fd("\n[bench] strategy: ", 2);
-	ft_putendl_fd(strategy_name(strategy), 2);
+	ft_putendl_fd(strategy_name(strategy, disorder, size), 2);
 	ft_putstr_fd("[bench] total_ops: ", 2);
 	ft_putnbr_fd(bench->total, 2);
 	ft_putchar_fd('\n', 2);

@@ -42,13 +42,13 @@ static int	run_program(t_stack *a, t_stack *b, t_bench *bench,
 	if (is_sorted(a))
 	{
 		if (bench->enabled)
-			print_benchmark(bench, disorder, options.strategy);
+			print_benchmark(bench, disorder, options.strategy, a->size);
 		return (0);
 	}
 	index_stack(a);
 	run_strategy(options.strategy, a, b);
 	if (bench->enabled)
-		print_benchmark(bench, disorder, options.strategy);
+		print_benchmark(bench, disorder, options.strategy, a->size);
 	return (0);
 }
 
